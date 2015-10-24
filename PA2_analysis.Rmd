@@ -1,0 +1,84 @@
+---
+title: "Which storm events are most harmful to population health and have the greatest economic consequences"
+output: html_document
+---
+##Sinopsys
+
+This study aims to identify the types of events that are most harmful to the population health or have the greatest economic consequences. This report is based on data from events of a broad variety registered between 1950 and 2011. The analysis explores the total number of reported victims related to events as well as the amount of losses with damage on economic goods. 
+
+### Loading Raw Data
+The data used was obtained from the National Oceanic and Atmospheric Administration's (NOAA) [National Weather Service](http://www.nws.noaa.gov/directives/). The [Storm Data](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2)[47 MB] documents "...the occurrence of storms and other significant weather phenomena having
+sufficient intensity to cause loss of life, injuries, significant property damage, and/or disruption to commerce", according to National Weather Service [Storm Data Documentation](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf).
+
+#### Reading in data
+
+```{r echo=TRUE, cache=TRUE}
+## setting vaviable 
+urlData <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+fileName <- "repdata-data-StormData.csv.bz2"
+## Download the file if it isn't yet downloaded
+if (!file.exists(fileName)){
+        download.file(urlData, destfile = fileName)
+}
+## create connection to read the compressed file
+con1 <- bzfile(fileName, open = "r", compression = 6  )
+## read the file if it isn't yet read
+stormData <- read.csv(con1)
+```
+
+
+We now check the structure of the dataset and the amount of data to deal with.  
+
+```{r echo=TRUE}
+dim(stormData)
+str(stormData)
+```
+
+#### Process the data 
+
+```{r echo=TRUE, results="hide", message=FALSE, warning=FALSE}
+## load needed libraries
+library(dplyr)
+```
+
+We can see that there is a few variables of interest to the scope of this analysis. We may now subset the dataset to get just the list of interest.  
+
+```{r echo=TRUE, cache=TRUE}
+## We need now to adjust the column names
+names(stormData) <- tolower(names(stormData))
+
+cdata <- select(stormData, evtype, fatalities, injuries, propdmg, propdmgexp, cropdmg, cropdmgexp)
+
+tabexp <- c("0","K","M","B",0,3,6,9)
+dim(tabexp) <- c(4,2)
+expon <- function(x,y){
+        result<-0
+        if (x%in%y[,1]) {
+                result<-10^(as.numeric(y[,2][y[,1]==x]))
+        }
+        result
+}
+cdata <- cdata %>% mutate( expprop = expon(propdmgexp,tabexp), expcrop = expon(cropdmgexp, tabexp))
+
+```
+
+We check now the few first row of data and if there is missing values
+```{r echo=TRUE}
+dim(cdata)
+head(cdata)
+colSums(is.na(cdata))
+```
+```{r echo=TRUE}
+```
+```{r echo=TRUE}
+summary(cdata)
+```
+```{r echo=TRUE}
+#d0Fatality <- aggregate(fatalities ~ evtype, cdata, sum)
+#d0Injury <- aggregate(injuries ~evtype, cdata, sum)
+```
+```{r echo=TRUE}
+#head(arrange(d0Fatality, desc(fatalities)))
+#head(arrange(d0Injury, desc(injuries)))
+
+```
